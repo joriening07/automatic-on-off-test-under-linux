@@ -1,5 +1,8 @@
 #!/bin/bash
 
+######## Switch turn on and test the connection #################
+
+
 ip=$1
 
 if (!ping -c 1 $ip) then
