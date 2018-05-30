@@ -1,0 +1,6 @@
+#!/bin/bash
+
+./portwellcycle.sh USB0 1 192.168.0.2>/dev/null & 
+./portwellcycle.sh USB1 2 192.168.0.2>/dev/null 
+
+#test number depends on how many units(outlets) you can support on the synaccess. 
