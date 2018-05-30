@@ -1,0 +1,92 @@
+#!/usr/bin/expect
+
+###default configuration check###
+
+if {[ llength $argv != 1 ]}{
+puts "error:first argument must be path to TTY of serial device"
+puts ""
+exit 1
+}
+
+set timeout 120
+set baud 38400
+set tty [lindex $argv 0]
+set os Linux
+set username "root"
+set password "factory"
+
+###main script starts here###
+
+#open the port
+
+set comport [open $tty {RDWR NONBLOCK}]
+set spawned [spawn -open $comport]
+stty ispeed $baud ospeed $baud raw -echo cs8 -parenb -cstopb onlcr<$tty
+
+puts "waiting for login..."
+set timeout 60
+expect{
+    timeout{
+        puts "Error: no login prompt"
+        exit 7
+}
+
+"/bin/sh:0:"{
+    puts "Error no /sbin/init"
+    exit 6
+}
+
+"BusyBox"{
+    puts "Fallback to BusyBox"
+    exit 5
+}
+
+
+
+"login:"{ 
+    send "${username}\n"
+}
+
+}
+
+set timeout 30
+expect{
+    timeout{
+        puts "Error:no password prompt"
+        exit 4
+}
+
+"password:"{
+    send "${password}\n"
+}
+}
+
+expect{ 
+    timeout{ 
+        puts "Error:no console shell"
+        exit 3
+}
+
+":~#"{
+    send "./findloop.sh\n"
+}
+}
+
+#findloop will quit after 5minuts. +/- one find time
+#set timeout to ~8 mins
+
+set timeout 500
+
+expect{ 
+    timeout{ 
+        puts "Error:find loop did not complete. no done recvd"
+        exit 2
+}
+
+"DONE:"{
+    #SUCCESS
+    exit()
+}
+}
+
+
